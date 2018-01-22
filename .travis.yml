@@ -1,0 +1,9 @@
+language: c
+sudo: true
+setup: sudo apt-get install cppcheck
+cache: ccache
+env:
+- TEST=build
+- TEST=lint
+- TEST=integration
+script: CI=TRUE ./test.sh
