@@ -1004,9 +1004,9 @@ start_message(struct buffered *buf, struct interface *ifp, int type, int len)
 static void
 end_message(struct buffered *buf, int type, int bytes)
 {
-    assert(buf->len >= bytes + 2 &&
-           buf->buf[buf->len - bytes - 2] == type &&
-           buf->buf[buf->len - bytes - 1] == bytes);
+    assert(buf->len >= bytes + 2);
+    assert(buf->buf[buf->len - bytes - 2] == type);
+    assert(buf->buf[buf->len - bytes - 1] == bytes);
     schedule_flush(buf);
 }
 
@@ -1219,10 +1219,12 @@ really_buffer_update(struct buffered *buf, struct interface *ifp,
 
     channels_size = diversity_kind == DIVERSITY_CHANNEL && channels_len >= 0 ?
         channels_len + 2 : 0;
-    len = 10 + (real_plen + 7) / 8 - omit + channels_size;
+    len = 14 + (real_plen + 7) / 8 - omit + channels_size;
     spb = (real_src_plen + 7) / 8;
     if(is_ss)
         len += 3 + spb;
+    if(send_fp_rtt)
+	len += fp_rtt_size;
 
     start_message(buf, ifp, MESSAGE_UPDATE, len);
     accumulate_byte(buf, v4 ? 1 : 2);
@@ -1240,13 +1242,13 @@ really_buffer_update(struct buffered *buf, struct interface *ifp,
         accumulate_byte(buf, real_src_plen);
         accumulate_bytes(buf, real_src_prefix, spb);
     }
-    /* Note that an empty channels TLV is different from no such TLV. */
     if(send_fp_rtt) {
         debugf("Sending a full path RTT of %s\n", format_thousands(rtt));
         accumulate_byte(buf, SUBTLV_PATH_RTT);
         accumulate_byte(buf, 4);
         accumulate_int(buf, rtt);
     }
+    /* Note that an empty channels TLV is different from no such TLV. */
     if(channels_size > 0) {
         accumulate_byte(buf, 2);
         accumulate_byte(buf, channels_len);
