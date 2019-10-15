@@ -143,7 +143,9 @@ parse_update_subtlv(struct interface *ifp, int metric, int ae,
 
     *src_plen = 0;
 
+    debugf("Parsing %d more bytes of update subtlv\n", (alen - i));
     while(i < alen) {
+        debugf("Parsing %d more bytes of update subtlv\n", (alen - i));
         type = a[i];
         if(type == SUBTLV_PAD1) {
             i++;
@@ -658,7 +660,7 @@ parse_packet(const unsigned char *from, struct interface *ifp,
             uint32_t price;
             unsigned int full_path_rtt;
             int rc, parsed_len, is_ss;
-            if(len < 10) {
+            if(len < 12) {
                 if(len < 2 || message[3] & 0x80)
                     have_v4_prefix = have_v6_prefix = 0;
                 goto fail;
@@ -687,7 +689,7 @@ parse_packet(const unsigned char *from, struct interface *ifp,
                     have_v4_prefix = have_v6_prefix = 0;
                 goto fail;
             }
-            parsed_len = 16 + rc;
+            parsed_len = 14 + rc;
 
             plen = message[4] + (message[2] == 1 ? 96 : 0);
 
@@ -1224,7 +1226,7 @@ really_buffer_update(struct buffered *buf, struct interface *ifp,
     if(is_ss)
         len += 3 + spb;
     if(send_fp_rtt)
-	len += fp_rtt_size;
+        len += fp_rtt_size;
 
     start_message(buf, ifp, MESSAGE_UPDATE, len);
     accumulate_byte(buf, v4 ? 1 : 2);
